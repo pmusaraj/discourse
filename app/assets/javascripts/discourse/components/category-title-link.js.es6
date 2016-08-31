@@ -1,4 +1,4 @@
-import { iconHTML } from 'discourse/helpers/fa-icon';
+import { iconHTML } from 'discourse-common/helpers/fa-icon';
 
 export default Em.Component.extend({
   tagName: 'h3',
