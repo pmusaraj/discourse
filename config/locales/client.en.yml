@@ -3235,3 +3235,11 @@ en:
       upload: "Upload"
       uploading: "Uploading..."
 
+      invites:
+        add_user: "add"
+        roles:
+          admin: "Admin"
+          moderator: "Moderator"
+          regular: "Regular User"
+
+
