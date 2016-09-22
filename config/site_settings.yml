@@ -60,6 +60,12 @@ required:
   exclude_rel_nofollow_domains:
     default: ''
     type: list
+  company_short_name:
+    default: ''
+  company_full_name:
+    default: ''
+  company_domain:
+    default: ''
 
 basic:
   default_locale:
@@ -968,6 +974,9 @@ developer:
   max_new_topics:
     default: 500
     client: true
+    hidden: true
+  wizard_enabled:
+    default: true
     hidden: true
 
 embedding:
