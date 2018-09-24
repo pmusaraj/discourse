@@ -63,7 +63,7 @@ before_install:
   - git clone --depth=1 https://github.com/discourse/discourse-staff-notes.git plugins/discourse-staff-notes
   - git clone --depth=1 https://github.com/discourse/discourse-group-tracker
   - export PATH=$HOME/.yarn/bin:$PATH
-  - yarn install --production --offline > /dev/null
+  - yarn install --production
 
 install:
   - bash -c "if [ '$RAILS_MASTER' == '1' ]; then bundle update --retry=3 --jobs=3 arel rails seed-fu > /dev/null; fi"
