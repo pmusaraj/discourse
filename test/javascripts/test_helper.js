@@ -4,7 +4,6 @@
 //= require probes
 //= require jquery.debug
 //= require jquery.ui.widget
-//= require handlebars
 //= require ember.debug
 //= require ember-template-compiler
 //= require message-bus

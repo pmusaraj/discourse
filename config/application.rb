@@ -211,7 +211,7 @@ module Discourse
     # ember stuff only used for asset precompliation, production variant plays up
     config.ember.variant = :development
     config.ember.ember_location = "#{Rails.root}/vendor/assets/javascripts/production/ember.js"
-    config.ember.handlebars_location = "#{Rails.root}/vendor/assets/javascripts/handlebars.js"
+    config.ember.handlebars_location = "#{Rails.root}/node_modules/handlebars/dist/handlebars.js"
 
     require 'auth'
 

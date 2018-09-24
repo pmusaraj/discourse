@@ -18,16 +18,12 @@
 //= require caret_position
 //= require favcount.js
 //= require jquery.ba-resize.js
-//= require jquery.color.js
-//= require jquery.cookie.js
 //= require jquery.fileupload.js
 //= require jquery.iframe-transport.js
 //= require jquery.putcursoratend.js
-//= require jquery.tagsinput.js
 //= require jquery.sortable.js
 //= require lodash.js
 //= require modernizr.custom.00874.js
-//= require mousetrap.js
 //= require rsvp.js
 //= require show-html.js
 //= require break_string
@@ -37,3 +33,9 @@
 //= require virtual-dom-amd
 //= require highlight.js
 //= require htmlparser.js
+
+// via packager (yarn)
+//= require jquery-color/jquery.color.js
+//= require jquery.cookie/jquery.cookie.js
+//= require jquery-tags-input/dist/jquery.tagsinput.min.js
+//= require mousetrap/mousetrap.js
