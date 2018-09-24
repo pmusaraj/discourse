@@ -63,11 +63,12 @@ before_install:
   - git clone --depth=1 https://github.com/discourse/discourse-staff-notes.git plugins/discourse-staff-notes
   - git clone --depth=1 https://github.com/discourse/discourse-group-tracker
   - export PATH=$HOME/.yarn/bin:$PATH
-  - yarn install --offline > /dev/null
+  - yarn install --production --offline > /dev/null
 
 install:
   - bash -c "if [ '$RAILS_MASTER' == '1' ]; then bundle update --retry=3 --jobs=3 arel rails seed-fu > /dev/null; fi"
   - bash -c "if [ '$RAILS_MASTER' == '0' ]; then bundle install --without development --deployment --retry=3 --jobs=3 > /dev/null; fi"
+  - bash -c "if [ '$QUNIT_RUN' == '1' ] || [ '$RUN_LINT' == '1' ]; then yarn install > /dev/null; fi"
   - bash -c "if [ '$RUN_LINT' != '1' ]; then LOAD_PLUGINS=1 bundle exec rake db:create db:migrate > /dev/null; fi"
 
 script:
