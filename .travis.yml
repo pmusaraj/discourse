@@ -51,7 +51,11 @@ cache:
 before_install:
   - nvm install node
   - node --version
+  - yarn --version
   - gem install bundler
+  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.9.4
+  - export PATH="$HOME/.yarn/bin:$PATH"
+  - yarn install
   - git clone --depth=1 https://github.com/discourse/discourse-backup-uploads-to-s3.git plugins/discourse-backup-uploads-to-s3
   - git clone --depth=1 https://github.com/discourse/discourse-spoiler-alert.git plugins/discourse-spoiler-alert
   - git clone --depth=1 https://github.com/discourse/discourse-cakeday.git plugins/discourse-cakeday
@@ -61,13 +65,11 @@ before_install:
   - git clone --depth=1 https://github.com/discourse/discourse-patreon.git plugins/discourse-patreon
   - git clone --depth=1 https://github.com/discourse/discourse-staff-notes.git plugins/discourse-staff-notes
   - git clone --depth=1 https://github.com/discourse/discourse-group-tracker
-  - export PATH=$HOME/.yarn/bin:$PATH
-  - yarn install --production > /dev/null
 
 install:
   - bash -c "if [ '$RAILS_MASTER' == '1' ]; then bundle update --retry=3 --jobs=3 arel rails seed-fu > /dev/null; fi"
   - bash -c "if [ '$RAILS_MASTER' == '0' ]; then bundle install --without development --deployment --retry=3 --jobs=3 > /dev/null; fi"
-  - bash -c "if [ '$QUNIT_RUN' == '1' ] || [ '$RUN_LINT' == '1' ]; then yarn install  > /dev/null; fi"
+  - bash -c "if [ '$QUNIT_RUN' == '1' ] || [ '$RUN_LINT' == '1' ]; then yarn install > /dev/null; fi"
   - bash -c "if [ '$RUN_LINT' != '1' ]; then LOAD_PLUGINS=1 bundle exec rake db:create db:migrate > /dev/null; fi"
 
 script:
