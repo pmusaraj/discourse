@@ -97,7 +97,8 @@ def compress_ruby(from, to)
                                source_map: {
                                  filename: File.basename(from),
                                  output_filename: File.basename(to)
-                               }
+                               },
+                               harmony: true
                               )
     .compile_with_map(data)
   dest = "#{assets_path}/#{to}"
