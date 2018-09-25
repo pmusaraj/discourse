@@ -88,11 +88,11 @@ module Discourse
     # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
 
     config.assets.paths += %W(#{config.root}/config/locales #{config.root}/public/javascripts)
+    config.assets.paths << "#{config.root}/node_modules"
 
     if Rails.env == "development" || Rails.env == "test"
       config.assets.paths << "#{config.root}/test/javascripts"
       config.assets.paths << "#{config.root}/test/stylesheets"
-      config.assets.paths << "#{config.root}/node_modules"
     end
 
     # Allows us to skip minifincation on some files
