@@ -40,7 +40,7 @@ rvm:
 services:
   - redis-server
 
-sudo: false
+sudo: required
 dist: trusty
 
 cache:
@@ -54,7 +54,7 @@ before_install:
   - gem install bundler
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.9.4
   - export PATH="$HOME/.yarn/bin:$PATH"
-  - yarn install --production --offline
+  - yarn install --production --prefer-offline
   - git clone --depth=1 https://github.com/discourse/discourse-backup-uploads-to-s3.git plugins/discourse-backup-uploads-to-s3
   - git clone --depth=1 https://github.com/discourse/discourse-spoiler-alert.git plugins/discourse-spoiler-alert
   - git clone --depth=1 https://github.com/discourse/discourse-cakeday.git plugins/discourse-cakeday
