@@ -10,7 +10,6 @@
   top: 0;
   left: 0;
   display: none;
-  overflow: hidden;
   touch-action: pan-y pinch-zoom;
   &.animate {
     transition: opacity 0.2s ease-out;
@@ -19,9 +18,4 @@
 
 body {
   touch-action: pan-y pinch-zoom;
-  height: 100%;
-  > #main {
-    height: 100%;
-    overflow: auto;
-  }
 }
