@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'open-uri'
 
 module SvgSprite
   SVG_ICONS ||= Set.new([
@@ -234,6 +235,15 @@ module SvgSprite
 
   def self.path
     "/svg-sprite/#{Discourse.current_hostname}/#{version}.svg"
+  end
+
+  def self.load
+    if GlobalSetting.cdn_url
+      cdn_path = "#{GlobalSetting.cdn_url}#{GlobalSetting.relative_url_root}#{path}"
+      open(cdn_path).read
+    else
+      bundle
+    end
   end
 
   def self.settings_icons

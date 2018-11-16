@@ -105,6 +105,12 @@
       </form>
     <% end %>
 
+    <div id="svg-sprites" style="display:none;">
+      <div class="fontawesome">
+        <%= raw SvgSprite.load %>
+      </div>
+    </div>
+
     <div class="hidden" id="data-preloaded" data-preloaded="<%= preloaded_json %>"></div>
     <%= preload_script "preload-application-data" %>
 
