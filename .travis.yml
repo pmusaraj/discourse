@@ -95,6 +95,7 @@ script:
             bundle exec rake plugin:spec
           else
             bundle exec rake knapsack:rspec
+          fi
         fi
       fi
     "
