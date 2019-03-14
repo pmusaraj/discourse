@@ -14,10 +14,6 @@ env:
     - TRAVIS_NODE_VERSION="10"
     - DISCOURSE_HOSTNAME=www.example.com
     - RUBY_GLOBAL_METHOD_CACHE_SIZE=131072
-  matrix:
-    - "RAILS_MASTER=0 QUNIT_RUN=0 RUN_LINT=0"
-    - "RAILS_MASTER=0 QUNIT_RUN=1 RUN_LINT=0"
-    - "RAILS_MASTER=0 QUNIT_RUN=0 RUN_LINT=1"
 
 addons:
   chrome: stable
@@ -71,23 +67,5 @@ install:
   - bash -c "if [ '$RUN_LINT' != '1' ]; then LOAD_PLUGINS=1 bundle exec rake db:create db:migrate; fi"
 
 script:
-  - |
-    bash -c "
-      if [ '$RUN_LINT' == '1' ]; then
-        bundle exec rubocop --parallel && \
-        bundle exec danger && \
-        yarn eslint --ext .es6 app/assets/javascripts && \
-        yarn eslint --ext .es6 test/javascripts && \
-        yarn eslint --ext .es6 plugins/**/assets/javascripts && \
-        yarn eslint --ext .es6 plugins/**/test/javascripts && \
-        yarn eslint app/assets/javascripts test/javascripts
-      else
-        if [ '$QUNIT_RUN' == '1' ]; then
-          bundle exec rake qunit:test['500000'] && \
-          bundle exec rake qunit:test['500000','/wizard/qunit'] && \
-          bundle exec rake plugin:qunit
-        else
-          KNAPSACK_GENERATE_REPORT=true bundle exec rspec spec && bundle exec rake plugin:spec
-        fi
-      fi
-    "
+  - "KNAPSACK_GENERATE_REPORT=true bundle exec rspec spec"
+
