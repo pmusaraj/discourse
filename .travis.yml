@@ -14,6 +14,9 @@ env:
     - TRAVIS_NODE_VERSION="10"
     - DISCOURSE_HOSTNAME=www.example.com
     - RUBY_GLOBAL_METHOD_CACHE_SIZE=131072
+    - RAILS_MASTER=0
+  matrix:
+    - "KNAPSACK_GENERATE_REPORT=true"
 
 addons:
   chrome: stable
@@ -68,4 +71,3 @@ install:
 
 script:
   - "KNAPSACK_GENERATE_REPORT=true bundle exec rspec spec"
-
