@@ -83,8 +83,7 @@ script:
         yarn eslint --ext .es6 test/javascripts && \
         yarn eslint --ext .es6 plugins/**/assets/javascripts && \
         yarn eslint --ext .es6 plugins/**/test/javascripts && \
-        yarn eslint app/assets/javascripts test/javascripts && \
-        bundle exec rake knapsack:rspec && bundle exec rake plugin:spec
+        yarn eslint app/assets/javascripts test/javascripts
       else
         if [ '$QUNIT_RUN' == '1' ]; then
           bundle exec rake qunit:test['500000'] && \
