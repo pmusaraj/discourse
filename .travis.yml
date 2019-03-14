@@ -15,10 +15,12 @@ env:
     - DISCOURSE_HOSTNAME=www.example.com
     - RUBY_GLOBAL_METHOD_CACHE_SIZE=131072
     - RAILS_MASTER=0
+    - CI_NODE_TOTAL=2
   matrix:
-    - "QUNIT_RUN=0 RUN_LINT=0"
-    # - "QUNIT_RUN=1 RUN_LINT=0"
-    # - "QUNIT_RUN=0 RUN_LINT=1"
+    - "QUNIT_RUN=1 RUN_LINT=0"
+    - "QUNIT_RUN=0 RUN_LINT=1"
+    - "QUNIT_RUN=0 RUN_LINT=0 CI_NODE_INDEX=0"
+    - "QUNIT_RUN=0 RUN_LINT=0 CI_NODE_INDEX=1"
 
 addons:
   chrome: stable
@@ -88,7 +90,7 @@ script:
           bundle exec rake qunit:test['500000','/wizard/qunit'] && \
           bundle exec rake plugin:qunit
         else
-          KNAPSACK_GENERATE_REPORT=true bundle exec rspec && bundle exec rake plugin:spec
+          bundle exec rake knapsack:rspec && bundle exec rake plugin:spec
         fi
       fi
     "
