@@ -18,7 +18,7 @@ env:
     - CI_NODE_TOTAL=2
   matrix:
     - "QUNIT_RUN=1 RUN_LINT=0"
-    - "QUNIT_RUN=0 RUN_LINT=1 LOAD_PLUGINS=1"
+    - "QUNIT_RUN=0 RUN_LINT=1"
     - "QUNIT_RUN=0 RUN_LINT=0 CI_NODE_INDEX=0"
     - "QUNIT_RUN=0 RUN_LINT=0 CI_NODE_INDEX=1"
 
@@ -71,7 +71,7 @@ install:
   - bash -c "if [ '$RAILS_MASTER' == '1' ]; then bundle update --retry=3 --jobs=3 arel rails seed-fu; fi"
   - bash -c "if [ '$RAILS_MASTER' == '0' ]; then bundle install --without development --deployment --retry=3 --jobs=3; fi"
   - bash -c "if [ '$QUNIT_RUN' == '1' ] || [ '$RUN_LINT' == '1' ]; then yarn install; fi"
-  - bundle exec rake db:create db:migrate
+  - bash -c "if [ '$RUN_LINT' != '1' ]; then LOAD_PLUGINS=1 bundle exec rake db:create db:migrate; fi"
 
 script:
   - |
@@ -91,7 +91,11 @@ script:
           bundle exec rake qunit:test['500000','/wizard/qunit'] && \
           bundle exec rake plugin:qunit
         else
-          bundle exec rake knapsack:rspec
+          if [ '$CI_NODE_INDEX' == '0' ]; then
+            bundle exec rake knapsack:rspec && bundle exec rake plugin:spec
+          else
+            bundle exec rake knapsack:rspec
+          fi
         fi
       fi
     "
