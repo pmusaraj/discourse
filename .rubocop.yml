@@ -7,7 +7,6 @@ AllCops:
     - "vendor/**/*"
     - "node_modules/**/*"
     - "public/**/*"
-    - "plugins/**/*"
 
 # Prefer &&/|| over and/or.
 Style/AndOr:

@@ -18,7 +18,7 @@ env:
     - CI_NODE_TOTAL=2
   matrix:
     - "RUN_LINT_AND_QUNIT=1"
-    - "RUN_LINT_AND_QUNIT=0 CI_NODE_INDEX=0"
+    - "RUN_LINT_AND_QUNIT=0 LOAD_PLUGINS=1 CI_NODE_INDEX=0"
     - "RUN_LINT_AND_QUNIT=0 CI_NODE_INDEX=1"
 
 addons:
@@ -69,7 +69,7 @@ before_install:
 install:
   - bash -c "if [ '$RAILS_MASTER' == '1' ]; then bundle update --retry=3 --jobs=3 arel rails seed-fu; fi"
   - bash -c "if [ '$RAILS_MASTER' == '0' ]; then bundle install --without development --deployment --retry=3 --jobs=3; fi"
-  - LOAD_PLUGINS=1 bundle exec rake db:create db:migrate
+  - bundle exec rake db:create db:migrate
 
 script:
   - |
