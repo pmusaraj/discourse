@@ -19,8 +19,7 @@ env:
   matrix:
     - "RUN_LINT_AND_QUNIT=1"
     - "RUN_LINT_AND_QUNIT=0 CI_NODE_INDEX=0"
-    - "RUN_LINT_AND_QUNIT=0 CI_NODE_INDEX=1"
-    - "RUN_LINT_AND_QUNIT=0 LOAD_PLUGINS=1"
+    - "RUN_LINT_AND_QUNIT=0 CI_NODE_INDEX=1 PLUGINS=1"
 
 addons:
   chrome: stable
@@ -70,12 +69,15 @@ before_install:
 install:
   - bash -c "if [ '$RAILS_MASTER' == '1' ]; then bundle update --retry=3 --jobs=3 arel rails seed-fu; fi"
   - bash -c "if [ '$RAILS_MASTER' == '0' ]; then bundle install --without development --deployment --retry=3 --jobs=3; fi"
-  - bundle exec rake db:create db:migrate
+  - bash -c "if [ '$PLUGINS' == '1' ]; then LOAD_PLUGINS=1 bundle exec rake db:create db:migrate; fi"
+  - bash -c "if [ '$RUN_LINT_AND_QUNIT' == '1' ]; then bundle exec rake db:create db:migrate; fi"
 
 script:
   - |
     bash -c "
       if [ '$RUN_LINT_AND_QUNIT' == '1' ]; then
+        bundle exec rubocop --parallel && \
+        bundle exec danger && \
         yarn install && \
         yarn eslint --ext .es6 app/assets/javascripts && \
         yarn eslint --ext .es6 test/javascripts && \
@@ -86,10 +88,8 @@ script:
         bundle exec rake qunit:test['500000','/wizard/qunit'] && \
         bundle exec rake plugin:qunit
       else
-        if [ '$LOAD_PLUGINS' == '1' ]; then
-          bundle exec rubocop --parallel && \
-          bundle exec danger && \
-          bundle exec rake plugin:spec
+        if [ '$PLUGINS' == '1' ]; then
+          bundle exec rake knapsack:rspec && bundle exec rake plugin:spec
         else
           bundle exec rake knapsack:rspec
         fi
