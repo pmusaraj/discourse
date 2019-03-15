@@ -76,8 +76,6 @@ script:
   - |
     bash -c "
       if [ '$RUN_LINT_AND_QUNIT' == '1' ]; then
-        bundle exec rubocop --parallel && \
-        bundle exec danger && \
         yarn install && \
         yarn eslint --ext .es6 app/assets/javascripts && \
         yarn eslint --ext .es6 test/javascripts && \
@@ -89,6 +87,8 @@ script:
         bundle exec rake plugin:qunit
       else
         if [ '$LOAD_PLUGINS' == '1' ]; then
+          bundle exec rubocop --parallel && \
+          bundle exec danger && \
           bundle exec rake plugin:spec
         else
           bundle exec rake knapsack:rspec
