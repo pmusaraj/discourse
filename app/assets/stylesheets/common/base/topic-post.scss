@@ -299,19 +299,19 @@ blockquote {
 .quote-button {
   display: none;
   position: absolute;
-  background-color: blend-primary-secondary(50%);
-  color: dark-light-choose($secondary, $primary);
-  padding: 10px;
   z-index: z("dropdown");
   opacity: 0.9;
 
-  .d-icon {
-    display: inline-block;
-  }
-
-  &:hover {
-    background-color: $primary-medium;
-    cursor: pointer;
+  .btn {
+    background-color: blend-primary-secondary(50%);
+    color: dark-light-choose($secondary, $primary);
+    .d-icon {
+      color: dark-light-choose($secondary, $primary);
+    }
+    &:hover {
+      background-color: $primary-medium;
+      cursor: pointer;
+    }
   }
 }
 

@@ -379,7 +379,7 @@ login:
   discord_trusted_guilds:
     default: ""
     type: list
-  external_auth_skip_create_confirm: 
+  external_auth_skip_create_confirm:
     default: false
     client: true
   enable_sso:
@@ -1737,7 +1737,7 @@ backups:
 
 search:
   search_ranking_normalization:
-    default: '1'
+    default: "1"
     hidden: true
   search_inject_extra_terms:
     default: true
@@ -1928,6 +1928,10 @@ uncategorized:
   show_create_topics_notice:
     client: true
     default: true
+
+  show_quote_share_twitter:
+    client: true
+    default: false
 
   enable_system_avatars:
     hidden: true

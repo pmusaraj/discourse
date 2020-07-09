@@ -1,1 +1,17 @@
-{{d-icon "quote-left"}} <span class="quote-label">{{i18n "post.quote_reply"}}</span>
+{{#if embedQuoteButton}}
+  {{d-button
+    class="btn insert-quote"
+    action=(action "insertQuote")
+    icon="quote-left"
+    label="post.quote_reply"}}
+{{/if}}
+
+{{#if shareQuoteTwitterEnabled}}
+  {{d-button
+    class="btn tweet-quote"
+    action=(action "shareQuoteTwitter")
+    icon="fab-twitter"
+    title="post.share_quote_twitter"}}
+{{/if}}
+
+{{plugin-outlet name="share-quote-after" tagName=""}}

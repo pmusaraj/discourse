@@ -2,14 +2,24 @@ import { schedule } from "@ember/runloop";
 import Component from "@ember/component";
 import discourseDebounce from "discourse/lib/debounce";
 import toMarkdown from "discourse/lib/to-markdown";
-import { selectedText, selectedElement } from "discourse/lib/utilities";
+import {
+  selectedText,
+  selectedElement,
+  postUrl
+} from "discourse/lib/utilities";
+import { getAbsoluteURL } from "discourse-common/lib/get-url";
 import { INPUT_DELAY } from "discourse-common/config/environment";
+import { action } from "@ember/object";
+import { alias } from "@ember/object/computed";
+import discourseComputed from "discourse-common/utils/decorators";
 
 function getQuoteTitle(element) {
   const titleEl = element.querySelector(".title");
   if (!titleEl) return;
   return titleEl.textContent.trim().replace(/:$/, "");
 }
+
+const TWITTER_SHARE_URL = "https://twitter.com/intent/tweet?text=";
 
 export default Component.extend({
   classNames: ["quote-button"],
@@ -18,6 +28,7 @@ export default Component.extend({
 
   _isMouseDown: false,
   _reselected: false,
+  shareQuoteTwitterEnabled: alias("siteSettings.show_quote_share_twitter"),
 
   _hideButton() {
     this.quoteState.clear();
@@ -204,8 +215,27 @@ export default Component.extend({
       .off("selectionchange.quote-button");
   },
 
-  click() {
+  @discourseComputed("topic.details.can_create_post", "composer.visible")
+  embedQuoteButton(canCreatePost, composerOpened) {
+    return (
+      (canCreatePost || composerOpened) &&
+      this.currentUser &&
+      this.currentUser.get("enable_quoting")
+    );
+  },
+
+  @action
+  insertQuote() {
     this.attrs.selectText().then(() => this._hideButton());
-    return false;
+  },
+
+  @action
+  shareQuoteTwitter() {
+    const url = getAbsoluteURL(
+        postUrl(this.topic.slug, this.topic.id, this.quoteState.postId)
+      ),
+      text = window.getSelection().toString();
+
+    window.open(`${TWITTER_SHARE_URL}"${text}" - ${url}`);
   }
 });

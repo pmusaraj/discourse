@@ -2577,6 +2577,7 @@ en:
 
     post:
       quote_reply: "Quote"
+      share_quote_twitter: "Share quote on Twitter"
       edit_reason: "Reason: "
       post_number: "post %{number}"
       ignored: "Ignored content"
