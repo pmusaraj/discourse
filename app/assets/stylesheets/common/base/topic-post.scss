@@ -301,16 +301,40 @@ blockquote {
   position: absolute;
   z-index: z("dropdown");
   opacity: 0.9;
+  background-color: dark-light-choose(
+    blend-primary-secondary(60%),
+    blend-primary-secondary(30%)
+  );
 
-  .btn {
-    background-color: blend-primary-secondary(50%);
+  .btn,
+  .btn:hover,
+  .d-icon,
+  .btn:hover .d-icon {
     color: dark-light-choose($secondary, $primary);
-    .d-icon {
-      color: dark-light-choose($secondary, $primary);
+  }
+
+  .insert-quote + .quote-sharing {
+    border-left: 1px solid
+      dark-light-choose(rgba($secondary, 0.4), rgba($primary, 0.4));
+  }
+  .quote-sharing {
+    > .d-icon {
+      padding-left: 12px;
+      padding-right: 6px;
     }
-    &:hover {
-      background-color: $primary-medium;
-      cursor: pointer;
+
+    .quote-share-buttons {
+      opacity: 0;
+      overflow: none;
+      max-width: 0;
+      display: inline-flex;
+      flex: 1;
+      transition: opacity 0.3s ease-in-out, max-width 0.3s ease-in-out;
+    }
+
+    &:hover .quote-share-buttons {
+      max-width: 120px;
+      opacity: 1;
     }
   }
 }

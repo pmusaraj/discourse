@@ -28,7 +28,7 @@ export default Component.extend({
 
   _isMouseDown: false,
   _reselected: false,
-  shareQuoteTwitterEnabled: alias("siteSettings.show_quote_share_twitter"),
+  quoteSharingEnabled: alias("siteSettings.show_quote_share_twitter"),
 
   _hideButton() {
     this.quoteState.clear();
