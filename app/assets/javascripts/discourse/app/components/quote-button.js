@@ -10,16 +10,14 @@ import {
 import { getAbsoluteURL } from "discourse-common/lib/get-url";
 import { INPUT_DELAY } from "discourse-common/config/environment";
 import { action } from "@ember/object";
-import { alias } from "@ember/object/computed";
 import discourseComputed from "discourse-common/utils/decorators";
+import Sharing from "discourse/lib/sharing";
 
 function getQuoteTitle(element) {
   const titleEl = element.querySelector(".title");
   if (!titleEl) return;
   return titleEl.textContent.trim().replace(/:$/, "");
 }
-
-const TWITTER_SHARE_URL = "https://twitter.com/intent/tweet?text=";
 
 export default Component.extend({
   classNames: ["quote-button"],
@@ -28,7 +26,6 @@ export default Component.extend({
 
   _isMouseDown: false,
   _reselected: false,
-  quoteSharingEnabled: alias("siteSettings.show_quote_share_twitter"),
 
   _hideButton() {
     this.quoteState.clear();
@@ -215,6 +212,37 @@ export default Component.extend({
       .off("selectionchange.quote-button");
   },
 
+  @discourseComputed
+  quoteSharingEnabled() {
+    if (
+      !this.siteSettings.share_quote_buttons.length ||
+      this.siteSettings.share_quote_visibility === "none"
+    ) {
+      return false;
+    }
+
+    if (
+      this.currentUser &&
+      this.siteSettings.share_quote_visibility === "anonymous"
+    ) {
+      return false;
+    }
+
+    return true;
+  },
+
+  @discourseComputed
+  quoteSharingSources() {
+    return Sharing.activeSources(this.siteSettings.share_quote_buttons);
+  },
+
+  @discourseComputed("topic", "quoteState")
+  shareUrl() {
+    return getAbsoluteURL(
+      postUrl(this.topic.slug, this.topic.id, this.quoteState.postId)
+    );
+  },
+
   @discourseComputed("topic.details.can_create_post", "composer.visible")
   embedQuoteButton(canCreatePost, composerOpened) {
     return (
@@ -230,12 +258,11 @@ export default Component.extend({
   },
 
   @action
-  shareQuoteTwitter() {
-    const url = getAbsoluteURL(
-        postUrl(this.topic.slug, this.topic.id, this.quoteState.postId)
-      ),
-      text = window.getSelection().toString();
-
-    window.open(`${TWITTER_SHARE_URL}"${text}" - ${url}`);
+  share(source) {
+    Sharing.shareSource(source, {
+      url: this.shareUrl,
+      title: this.topic.title,
+      quote: window.getSelection().toString()
+    });
   }
 });

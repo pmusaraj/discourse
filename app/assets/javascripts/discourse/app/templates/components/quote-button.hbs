@@ -8,16 +8,22 @@
 
 {{#if quoteSharingEnabled}}
   <span class="quote-sharing">
-    {{d-icon "caret-right"}}
+    {{d-button
+      icon="share"
+      label="post.quote_share"
+      class="btn-flat insert-quote-share"}}
 
     <span class="quote-share-buttons">
-      {{d-button
-        class="btn-flat tweet-quote"
-        action=(action "shareQuoteTwitter")
-        icon="fab-twitter"
-        title="post.share_quote_twitter"}}
+      {{#each quoteSharingSources as |source|}}
+        {{d-button
+          class="btn-flat"
+          action=(action "share" source)
+          translatedTitle=source.title
+          icon=source.icon}}
+      {{/each}}
+      {{plugin-outlet name="quote-share-buttons-after" tagName=""}}
     </span>
   </span>
 {{/if}}
 
-{{plugin-outlet name="share-quote-after" tagName=""}}
+{{plugin-outlet name="quote-button-after" tagName=""}}

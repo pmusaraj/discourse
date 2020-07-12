@@ -296,6 +296,18 @@ blockquote {
   }
 }
 
+@keyframes bump {
+  0%,
+  20%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10%);
+  }
+}
+
 .quote-button {
   display: none;
   position: absolute;
@@ -305,6 +317,10 @@ blockquote {
     blend-primary-secondary(60%),
     blend-primary-secondary(30%)
   );
+
+  &.visible {
+    display: block;
+  }
 
   .btn,
   .btn:hover,
@@ -317,24 +333,44 @@ blockquote {
     border-left: 1px solid
       dark-light-choose(rgba($secondary, 0.4), rgba($primary, 0.4));
   }
+
   .quote-sharing {
-    > .d-icon {
-      padding-left: 12px;
-      padding-right: 6px;
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .insert-quote-share {
+      opacity: 1;
+      max-width: 120px;
+      transition: opacity 0.3s ease-in-out, max-width 0.3s ease-in-out,
+        padding 0.3s ease-in-out;
+    }
+
+    &:hover .insert-quote-share {
+      opacity: 0;
+      max-width: 0px;
+      padding: 6px 0px;
     }
 
     .quote-share-buttons {
       opacity: 0;
-      overflow: none;
+      overflow: hidden;
       max-width: 0;
       display: inline-flex;
-      flex: 1;
       transition: opacity 0.3s ease-in-out, max-width 0.3s ease-in-out;
     }
 
     &:hover .quote-share-buttons {
       max-width: 120px;
       opacity: 1;
+      .btn {
+        animation: bump 0.6s;
+      }
     }
   }
 }

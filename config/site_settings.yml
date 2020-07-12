@@ -197,6 +197,23 @@ basic:
       - twitter
       - facebook
       - email
+  share_quote_visibility:
+    client: true
+    type: enum
+    default: "anonymous"
+    choices:
+      - none
+      - anonymous
+      - all
+  share_quote_buttons:
+    client: true
+    type: list
+    default: ""
+    allow_any: false
+    choices:
+      - twitter
+      - facebook
+      - email
   desktop_category_page_style:
     client: true
     enum: "CategoryPageStyle"
@@ -354,6 +371,7 @@ login:
   enable_facebook_logins:
     default: false
   facebook_app_id:
+    client: true
     default: ""
     regex: "^\\d+$"
   facebook_app_secret:
@@ -1928,10 +1946,6 @@ uncategorized:
   show_create_topics_notice:
     client: true
     default: true
-
-  show_quote_share_twitter:
-    client: true
-    default: false
 
   enable_system_avatars:
     hidden: true
