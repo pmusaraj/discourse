@@ -200,6 +200,7 @@ class Topic < ActiveRecord::Base
   has_many :ordered_posts, -> { order(post_number: :asc) }, class_name: "Post"
   has_many :topic_allowed_users
   has_many :topic_allowed_groups
+  has_many :incoming_email
 
   has_many :group_archived_messages, dependent: :destroy
   has_many :user_archived_messages, dependent: :destroy
@@ -233,7 +234,7 @@ class Topic < ActiveRecord::Base
 
   has_one :user_warning
   has_one :first_post, -> { where post_number: 1 }, class_name: 'Post'
-  has_one :topic_search_data, dependent: :delete
+  has_one :topic_search_data
   has_one :topic_embed, dependent: :destroy
 
   belongs_to :image_upload, class_name: 'Upload'
@@ -866,7 +867,8 @@ class Topic < ActiveRecord::Base
                               no_bump: opts[:bump].blank?,
                               topic_id: self.id,
                               skip_validations: true,
-                              custom_fields: opts[:custom_fields])
+                              custom_fields: opts[:custom_fields],
+                              import_mode: opts[:import_mode])
 
     if (new_post = creator.create) && new_post.present?
       increment!(:moderator_posts_count) if new_post.persisted?
@@ -1069,7 +1071,13 @@ class Topic < ActiveRecord::Base
   end
 
   def update_action_counts
-    update_column(:like_count, Post.where(topic_id: id).sum(:like_count))
+    update_column(
+      :like_count,
+      Post
+        .where.not(post_type: Post.types[:whisper])
+        .where(topic_id: id)
+        .sum(:like_count)
+    )
   end
 
   def posters_summary(options = {}) # avatar lookup in options

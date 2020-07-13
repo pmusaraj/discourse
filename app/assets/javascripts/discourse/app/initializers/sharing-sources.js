@@ -48,7 +48,8 @@ export default {
         return `mailto:?to=&subject=${subject}&body=${encodeURIComponent(
           text
         )}`;
-      }
+      },
+      showInPrivateContext: true
     });
   }
 };

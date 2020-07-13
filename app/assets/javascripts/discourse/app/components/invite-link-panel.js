@@ -1,7 +1,7 @@
 import I18n from "I18n";
 import Component from "@ember/component";
 import Group from "discourse/models/group";
-import { readOnly } from "@ember/object/computed";
+import { alias, readOnly } from "@ember/object/computed";
 import { action } from "@ember/object";
 import discourseComputed from "discourse-common/utils/decorators";
 import Invite from "discourse/models/invite";
@@ -17,9 +17,12 @@ export default Component.extend({
   groupIds: null,
   allGroups: null,
 
+  isAdmin: alias("currentUser.admin"),
+
   init() {
     this._super(...arguments);
 
+    this.set("groupIds", []);
     Group.findAll().then(groups => {
       this.set("allGroups", groups.filterBy("automatic", false));
     });
@@ -40,16 +43,19 @@ export default Component.extend({
     return false;
   },
 
-  groupFinder(term) {
-    return Group.findAll({ term, ignore_automatic: true });
-  },
-
   errorMessage: I18n.t("user.invited.invite_link.error"),
+
+  @discourseComputed("isAdmin", "inviteModel.group_users")
+  showGroups(isAdmin, groupUsers) {
+    return (
+      isAdmin || (groupUsers && groupUsers.some(groupUser => groupUser.owner))
+    );
+  },
 
   reset() {
     this.setProperties({
       maxRedemptionAllowed: 5,
-      groupIds: null
+      groupIds: []
     });
 
     this.inviteModel.setProperties({
@@ -66,9 +72,7 @@ export default Component.extend({
       return;
     }
 
-    const groupNames = this.allGroups
-      .filter(g => this.groupIds.includes(g.id))
-      .map(g => g.name);
+    const groupIds = this.groupIds;
     const maxRedemptionAllowed = this.maxRedemptionAllowed;
     const inviteExpiresAt = this.inviteExpiresAt;
     const userInvitedController = this.userInvitedShow;
@@ -77,7 +81,7 @@ export default Component.extend({
 
     return model
       .generateMultipleUseInviteLink(
-        groupNames,
+        groupIds,
         maxRedemptionAllowed,
         inviteExpiresAt
       )

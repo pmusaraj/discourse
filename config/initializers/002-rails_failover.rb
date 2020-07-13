@@ -31,9 +31,11 @@ if defined?(RailsFailover::ActiveRecord)
   end
 
   RailsFailover::ActiveRecord.on_failover do
-    RailsMultisite::ConnectionManagement.each_connection do
-      Discourse.enable_readonly_mode(Discourse::PG_READONLY_MODE_KEY)
-      Sidekiq.pause!("pg_failover") if !Sidekiq.paused?
+    if RailsMultisite::ConnectionManagement.current_db == RailsMultisite::ConnectionManagement::DEFAULT
+      RailsMultisite::ConnectionManagement.each_connection do
+        Discourse.enable_readonly_mode(Discourse::PG_READONLY_MODE_KEY)
+        Sidekiq.pause!("pg_failover") if !Sidekiq.paused?
+      end
     end
   end
 
@@ -55,10 +57,11 @@ if defined?(RailsFailover::ActiveRecord)
       Discourse::PG_FORCE_READONLY_MODE_KEY
     )
   rescue => e
-    unless e.is_a?(Redis::CannotConnectError)
+    if e.is_a?(Redis::CannotConnectError)
+      true
+    else
       Rails.logger.warn "#{e.class} #{e.message}: #{e.backtrace.join("\n")}"
+      false
     end
-
-    false
   end
 end

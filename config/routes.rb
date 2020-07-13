@@ -572,6 +572,7 @@ Discourse::Application.routes.draw do
             manage/members
             manage/membership
             manage/interaction
+            manage/email
             manage/logs
           }.each do |path|
             get path => 'groups#show'
@@ -691,7 +692,7 @@ Discourse::Application.routes.draw do
       get "/" => "list#category_default", as: "category_default"
     end
 
-    get "category_hashtags/check" => "category_hashtags#check"
+    get "hashtags" => "hashtags#show"
 
     TopTopic.periods.each do |period|
       get "top/#{period}.rss" => "list#top_#{period}_feed", format: :rss
@@ -886,7 +887,6 @@ Discourse::Application.routes.draw do
       get '/' => 'tags#index'
       get '/filter/list' => 'tags#index'
       get '/filter/search' => 'tags#search'
-      get '/check' => 'tags#check_hashtag'
       get '/personal_messages/:username' => 'tags#personal_messages'
       post '/upload' => 'tags#upload'
       get '/unused' => 'tags#list_unused'
