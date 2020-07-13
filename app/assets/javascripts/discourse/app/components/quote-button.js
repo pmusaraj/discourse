@@ -215,15 +215,10 @@ export default Component.extend({
   @discourseComputed
   quoteSharingEnabled() {
     if (
-      !this.siteSettings.share_quote_buttons.length ||
-      this.siteSettings.share_quote_visibility === "none"
-    ) {
-      return false;
-    }
-
-    if (
-      this.currentUser &&
-      this.siteSettings.share_quote_visibility === "anonymous"
+      this.siteSettings.share_quote_visibility === "none" ||
+      this.quoteSharingSources.length === 0 ||
+      (this.currentUser &&
+        this.siteSettings.share_quote_visibility === "anonymous")
     ) {
       return false;
     }
@@ -231,9 +226,12 @@ export default Component.extend({
     return true;
   },
 
-  @discourseComputed
-  quoteSharingSources() {
-    return Sharing.activeSources(this.siteSettings.share_quote_buttons);
+  @discourseComputed("topic.isPrivateMessage")
+  quoteSharingSources(isPM) {
+    return Sharing.activeSources(
+      this.siteSettings.share_quote_buttons,
+      this.siteSettings.login_required || isPM
+    );
   },
 
   @discourseComputed("topic", "quoteState")
