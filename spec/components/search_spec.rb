@@ -175,7 +175,6 @@ describe Search do
                                    raw: 'hello from mars, we just landed') }
 
     it 'searches correctly' do
-
       expect do
         Search.execute('mars', type_filter: 'private_messages')
       end.to raise_error(Discourse::InvalidAccess)
@@ -269,7 +268,7 @@ describe Search do
         pm_4 = create_pm(users: [participant_2, current])
         results = Search.execute("in:personal-direct", guardian: Guardian.new(current))
         expect(results.posts.size).to eq(3)
-        expect(results.posts.map(&:topic_id)).to contain_exactly(pm.id, pm_3.id, pm_4.id)
+        expect(results.posts.map(&:topic_id)).to eq([pm_4.id, pm_3.id, pm.id])
       end
 
       it 'can filter direct PMs by @username' do
@@ -278,8 +277,8 @@ describe Search do
         _pm_3 = create_pm(users: [participant_2, current])
         results = Search.execute("@#{participant.username} in:personal-direct", guardian: Guardian.new(current))
         expect(results.posts.size).to eq(2)
-        expect(results.posts.map(&:topic_id)).to contain_exactly(pm.id, pm_2.id)
-        expect(results.posts.map(&:user_id).uniq).to contain_exactly(participant.id)
+        expect(results.posts.map(&:topic_id)).to eq([pm_2.id, pm.id])
+        expect(results.posts.map(&:user_id).uniq).to eq([participant.id])
       end
 
       it "doesn't include PMs that have more than 2 participants" do
@@ -368,6 +367,102 @@ describe Search do
     end
   end
 
+  context 'posts' do
+    let(:post) { Fabricate(:post) }
+    let(:topic) { post.topic }
+
+    let!(:reply) do
+      Fabricate(:post_with_long_raw_content,
+        topic: topic,
+        user: topic.user,
+      ).tap { |post| post.update!(raw: "#{post.raw} elephant") }
+    end
+
+    let(:expected_blurb) do
+      "...quire content longer than the typical test post raw content. It really is some long content, folks. elephant"
+    end
+
+    it 'returns the post' do
+      result = Search.execute('elephant',
+        type_filter: 'topic',
+        include_blurbs: true
+      )
+
+      expect(result.posts).to contain_exactly(reply)
+      expect(result.blurb(reply)).to eq(expected_blurb)
+    end
+
+    it 'returns the right post and blurb for searches with phrase' do
+      result = Search.execute('"elephant"',
+        type_filter: 'topic',
+        include_blurbs: true
+      )
+
+      expect(result.posts).to contain_exactly(reply)
+      expect(result.blurb(reply)).to eq(expected_blurb)
+    end
+
+    it 'applies a small penalty to closed topic when ranking' do
+      post = Fabricate(:post,
+        raw: "My weekly update",
+        topic: Fabricate(:topic,
+          title: "A topic that will be closed",
+          closed: true
+        )
+      )
+
+      post2 = Fabricate(:post,
+        raw: "My weekly update",
+        topic: Fabricate(:topic,
+          title: "A topic that will be open"
+        )
+      )
+
+      result = Search.execute('weekly update')
+      expect(result.posts.pluck(:id)).to eq([post2.id, post.id])
+    end
+
+    it 'aggregates searches in a topic by returning the post with the highest rank' do
+      post = Fabricate(:post, topic: topic, raw: "this is a play post")
+      post2 = Fabricate(:post, topic: topic, raw: "play play playing played play")
+      post3 = Fabricate(:post, raw: "this is a play post")
+
+      5.times do
+        Fabricate(:post, topic: topic, raw: "play playing played")
+      end
+
+      results = Search.execute('play')
+
+      expect(results.posts.map(&:id)).to eq([
+        post2.id,
+        post3.id
+      ])
+    end
+
+    it "allows the configuration of search to prefer recent posts" do
+      SiteSetting.search_prefer_recent_posts = true
+      SiteSetting.search_recent_posts_size = 1
+      post = Fabricate(:post, topic: topic, raw: "this is a play post")
+
+      results = Search.execute('play post')
+
+      expect(results.posts.map(&:id)).to eq([
+        post.id
+      ])
+
+      post2 = Fabricate(:post, raw: "this is a play post")
+
+      results = Search.execute('play post')
+
+      expect(results.posts.map(&:id)).to eq([
+        post2.id,
+        post.id
+      ])
+    ensure
+      Discourse.cache.clear
+    end
+  end
+
   context 'topics' do
     let(:post) { Fabricate(:post) }
     let(:topic) { post.topic }
@@ -427,87 +522,11 @@ describe Search do
 
     context 'searching the OP' do
       let!(:post) { Fabricate(:post_with_long_raw_content) }
-      let(:result) { Search.execute('hundred', type_filter: 'topic', include_blurbs: true) }
+      let(:result) { Search.execute('hundred', type_filter: 'topic') }
 
       it 'returns a result correctly' do
         expect(result.posts.length).to eq(1)
         expect(result.posts[0].id).to eq(post.id)
-      end
-    end
-
-    context 'searching for a post' do
-      let!(:reply) do
-        Fabricate(:post_with_long_raw_content,
-          topic: topic,
-          user: topic.user,
-        ).tap { |post| post.update!(raw: "#{post.raw} elephant") }
-      end
-
-      let(:expected_blurb) do
-        "...quire content longer than the typical test post raw content. It really is some long content, folks. elephant"
-      end
-
-      it 'returns the post' do
-        result = Search.execute('elephant',
-          type_filter: 'topic',
-          include_blurbs: true
-        )
-
-        expect(result.posts).to contain_exactly(reply)
-        expect(result.blurb(reply)).to eq(expected_blurb)
-      end
-
-      it 'returns the right post and blurb for searches with phrase' do
-        result = Search.execute('"elephant"',
-          type_filter: 'topic',
-          include_blurbs: true
-        )
-
-        expect(result.posts).to contain_exactly(reply)
-        expect(result.blurb(reply)).to eq(expected_blurb)
-      end
-
-      it 'does not allow a post with repeated words to dominate the ranking' do
-        category = Fabricate(:category_with_definition, name: "winter is coming")
-
-        post = Fabricate(:post,
-          raw: "I think winter will end soon",
-          topic: Fabricate(:topic,
-            title: "dragon john snow winter",
-            category: category
-          )
-        )
-
-        post2 = Fabricate(:post,
-          raw: "I think #{'winter' * 20} will end soon",
-          topic: Fabricate(:topic, title: "dragon john snow summer", category: category)
-        )
-
-        result = Search.execute('winter')
-
-        expect(result.posts.pluck(:id)).to eq([
-          post.id, category.topic.first_post.id, post2.id
-        ])
-      end
-
-      it 'applies a small penalty to closed topic when ranking' do
-        post = Fabricate(:post,
-          raw: "My weekly update",
-          topic: Fabricate(:topic,
-            title: "A topic that will be closed",
-            closed: true
-          )
-        )
-
-        post2 = Fabricate(:post,
-          raw: "My weekly update",
-          topic: Fabricate(:topic,
-            title: "A topic that will be open"
-          )
-        )
-
-        result = Search.execute('weekly update')
-        expect(result.posts.pluck(:id)).to eq([post2.id, post.id])
       end
     end
 
@@ -624,11 +643,11 @@ describe Search do
         category, ignored_category
       )
 
-      expect(search.posts).to contain_exactly(category.topic.first_post, post)
+      expect(search.posts).to eq([category.topic.first_post, post])
 
       search = Search.execute("monkey #test")
 
-      expect(search.posts).to contain_exactly(ignored_category.topic.first_post)
+      expect(search.posts).to eq([ignored_category.topic.first_post])
     end
 
     describe "with child categories" do
@@ -653,28 +672,28 @@ describe Search do
           category, ignored_category, child_of_ignored_category
         )
 
-        expect(search.posts).to contain_exactly(
-          category.topic.first_post,
-          post,
+        expect(search.posts.map(&:id)).to eq([
           child_of_ignored_category.topic.first_post,
-          post2
-        )
+          category.topic.first_post,
+          post2,
+          post
+        ].map(&:id))
 
         search = Search.execute("snow")
-        expect(search.posts).to contain_exactly(post, post2)
+        expect(search.posts.map(&:id)).to eq([post2.id, post.id])
 
         category.set_permissions({})
-        category.save
+        category.save!
         search = Search.execute("monkey")
 
         expect(search.categories).to contain_exactly(
           ignored_category, child_of_ignored_category
         )
 
-        expect(search.posts).to contain_exactly(
+        expect(search.posts.map(&:id)).to eq([
           child_of_ignored_category.topic.first_post,
           post2
-        )
+        ].map(&:id))
       end
     end
 
@@ -683,18 +702,19 @@ describe Search do
 
       it "should return posts in the right order" do
         raw = "The pure genuine evian"
-        post = freeze_time(10.seconds.from_now) { Fabricate(:post, topic: category.topic, raw: raw) }
-        post2 = freeze_time(20.seconds.from_now) { Fabricate(:post, topic: category2.topic, raw: raw) }
+        post = Fabricate(:post, topic: category.topic, raw: raw)
+        post2 = Fabricate(:post, topic: category2.topic, raw: raw)
+        post2.topic.update!(bumped_at: 10.seconds.from_now)
 
         search = Search.execute(raw)
 
-        expect(search.posts).to eq([post2, post])
+        expect(search.posts.map(&:id)).to eq([post2.id, post.id])
 
         category.update!(search_priority: Searchable::PRIORITIES[:high])
 
         search = Search.execute(raw)
 
-        expect(search.posts).to eq([post, post2])
+        expect(search.posts.map(&:id)).to eq([post.id, post2.id])
       end
     end
 
@@ -793,8 +813,8 @@ describe Search do
       it 'shows staff tags' do
         create_staff_tags(["#{tag.name}9"])
 
-        expect(Search.execute(tag.name, guardian: Guardian.new(admin)).tags.map(&:name)).to contain_exactly(tag.name, "#{tag.name}9")
-        expect(search.tags.map(&:name)).to contain_exactly(tag.name, "#{tag.name}9")
+        expect(Search.execute(tag.name, guardian: Guardian.new(admin)).tags.map(&:name)).to eq([tag.name, "#{tag.name}9"])
+        expect(search.tags.map(&:name)).to eq([tag.name, "#{tag.name}9"])
       end
 
       it 'includes category-restricted tags' do
@@ -804,8 +824,8 @@ describe Search do
         category.allowed_tag_groups = [tag_group.name]
         category.save!
 
-        expect(Search.execute(tag.name, guardian: Guardian.new(admin)).tags).to contain_exactly(tag, category_tag)
-        expect(search.tags).to contain_exactly(tag, category_tag)
+        expect(Search.execute(tag.name, guardian: Guardian.new(admin)).tags).to eq([tag, category_tag])
+        expect(search.tags).to eq([tag, category_tag])
       end
     end
   end
@@ -1064,12 +1084,22 @@ describe Search do
       expect(Search.execute('badge:"test"').posts.length).to eq(0)
     end
 
+    it 'can match exact phrases' do
+      post = Fabricate(:post, raw: %{this is a test post with 'a URL https://some.site.com/search?q=test.test.test some random text I have to add})
+      post2 = Fabricate(:post, raw: 'test URL post with')
+
+      expect(Search.execute("test post with 'a URL).posts").posts).to eq([post2, post])
+      expect(Search.execute(%{"test post with 'a URL"}).posts).to eq([post])
+      expect(Search.execute(%{"https://some.site.com/search?q=test.test.test"}).posts).to eq([post])
+      expect(Search.execute(%{" with 'a URL https://some.site.com/search?q=test.test.test"}).posts).to eq([post])
+    end
+
     it 'can search numbers correctly, and match exact phrases' do
       post = Fabricate(:post, raw: '3.0 eta is in 2 days horrah')
       post2 = Fabricate(:post, raw: '3.0 is eta in 2 days horrah')
 
-      expect(Search.execute('3.0 eta').posts).to contain_exactly(post, post2)
-      expect(Search.execute("'3.0 eta'").posts).to contain_exactly(post, post2)
+      expect(Search.execute('3.0 eta').posts).to eq([post, post2])
+      expect(Search.execute("'3.0 eta'").posts).to eq([post, post2])
       expect(Search.execute("\"3.0 eta\"").posts).to contain_exactly(post)
       expect(Search.execute('"3.0, eta is"').posts).to eq([])
     end
@@ -1180,29 +1210,52 @@ describe Search do
       )
 
       # Expecting the default results
-      expect(Search.execute('Topic').posts).to contain_exactly(
-        old_relevant_topic_post,
-        latest_irelevant_topic_post,
-        category.topic.first_post
-      )
+      expect(Search.execute('Topic').posts.map(&:id)).to eq([
+        old_relevant_topic_post.id,
+        latest_irelevant_topic_post.id,
+        category.topic.first_post.id
+      ])
 
       # Expecting the ordered by topic creation results
-      expect(Search.execute('Topic order:latest_topic').posts).to contain_exactly(
-        latest_irelevant_topic_post,
-        old_relevant_topic_post,
-        category.topic.first_post
-      )
+      expect(Search.execute('Topic order:latest_topic').posts.map(&:id)).to eq([
+        category.topic.first_post.id,
+        latest_irelevant_topic_post.id,
+        old_relevant_topic_post.id
+      ])
     end
 
-    it 'can tokenize dots' do
+    it 'can order by topic views' do
+      topic = Fabricate(:topic, views: 1)
+      topic2 = Fabricate(:topic, views: 2)
+      post = Fabricate(:post, raw: 'Topic', topic: topic)
+      post2 = Fabricate(:post, raw: 'Topic', topic: topic2)
+
+      expect(Search.execute('Topic order:views').posts.map(&:id)).to eq([
+        post2.id,
+        post.id
+      ])
+    end
+
+    it 'can search for terms with dots' do
       post = Fabricate(:post, raw: 'Will.2000 Will.Bob.Bill...')
       expect(Search.execute('bill').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('bob').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('2000').posts.map(&:id)).to eq([post.id])
     end
 
-    it 'can tokanize website names correctly' do
+    it 'can search URLS correctly' do
       post = Fabricate(:post, raw: 'i like http://wb.camra.org.uk/latest#test so yay')
+
       expect(Search.execute('http://wb.camra.org.uk/latest#test').posts.map(&:id)).to eq([post.id])
       expect(Search.execute('camra').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('http://wb').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('wb.camra').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('wb.camra.org').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('org.uk').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('camra.org.uk').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('wb.camra.org.uk').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('wb.camra.org.uk/latest').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('/latest#test').posts.map(&:id)).to eq([post.id])
     end
 
     it 'supports category slug and tags' do
@@ -1296,9 +1349,9 @@ describe Search do
       fab!(:post5) { indexed_post(topic: topic5) }
 
       it 'can find posts by tag group' do
-        expect(Search.execute('#mid-day').posts.map(&:id)).to (
-          contain_exactly(post3.id, post4.id, post5.id)
-        )
+        expect(Search.execute('#mid-day').posts.map(&:id)).to eq([
+          post5, post4, post3
+        ].map(&:id))
       end
 
       it 'can find posts with tag' do
@@ -1326,14 +1379,14 @@ describe Search do
       end
 
       it 'can find posts which contains provided tags and does not contain selected ones' do
-        expect(Search.execute('tags:eggs -tags:lunch').posts)
-          .to contain_exactly(post1, post2, post5)
+        expect(Search.execute('tags:eggs -tags:lunch').posts.map(&:id))
+          .to eq([post5, post2, post1].map(&:id))
 
-        expect(Search.execute('tags:eggs -tags:lunch+sandwiches').posts)
-          .to contain_exactly(post1, post2, post3, post5)
+        expect(Search.execute('tags:eggs -tags:lunch+sandwiches').posts.map(&:id))
+          .to eq([post5, post3, post2, post1].map(&:id))
 
-        expect(Search.execute('tags:eggs -tags:lunch,sandwiches').posts)
-          .to contain_exactly(post1, post2)
+        expect(Search.execute('tags:eggs -tags:lunch,sandwiches').posts.map(&:id))
+          .to eq([post2, post1].map(&:id))
       end
 
       it 'orders posts correctly when combining tags with categories or terms' do
@@ -1345,8 +1398,10 @@ describe Search do
 
         expect(Search.execute('bakey tags:lunch order:latest').posts.map(&:id))
           .to eq([post8.id, post7.id])
+
         expect(Search.execute('#food tags:lunch order:latest').posts.map(&:id))
           .to eq([post8.id, post7.id])
+
         expect(Search.execute('#food tags:lunch order:likes').posts.map(&:id))
           .to eq([post7.id, post8.id])
       end
@@ -1354,12 +1409,14 @@ describe Search do
     end
 
     it "can find posts which contains filetypes" do
-      post1 = Fabricate(:post,
-                        raw: "http://example.com/image.png")
+      post1 = Fabricate(:post, raw: "http://example.com/image.png")
+
       post2 = Fabricate(:post,
-                         raw: "Discourse logo\n"\
-                              "http://example.com/logo.png\n"\
-                              "http://example.com/vector_image.svg")
+        raw: "Discourse logo\n"\
+          "http://example.com/logo.png\n"\
+          "http://example.com/vector_image.svg"
+      )
+
       post_with_upload = Fabricate(:post, uploads: [Fabricate(:upload)])
       Fabricate(:post)
 
@@ -1367,8 +1424,12 @@ describe Search do
       TopicLink.extract_from(post2)
 
       expect(Search.execute('filetype:svg').posts).to eq([post2])
-      expect(Search.execute('filetype:png').posts.map(&:id)).to contain_exactly(post1.id, post2.id, post_with_upload.id)
-      expect(Search.execute('logo filetype:png').posts.map(&:id)).to eq([post2.id])
+
+      expect(Search.execute('filetype:png').posts.map(&:id)).to eq([
+        post_with_upload, post2, post1
+      ].map(&:id))
+
+      expect(Search.execute('logo filetype:png').posts).to eq([post2])
     end
   end
 
@@ -1452,19 +1513,14 @@ describe Search do
   context 'in:title' do
     it 'allows for search in title' do
       topic = Fabricate(:topic, title: 'I am testing a title search')
-      _post = Fabricate(:post, topic: topic, raw: 'this is the first post')
+      post2 = Fabricate(:post, topic: topic, raw: 'this is the second post', post_number: 2)
+      post = Fabricate(:post, topic: topic, raw: 'this is the first post', post_number: 1)
 
       results = Search.execute('title in:title')
-      expect(results.posts.length).to eq(1)
-
-      results = Search.execute('title t')
-      expect(results.posts.length).to eq(1)
+      expect(results.posts.map(&:id)).to eq([post.id])
 
       results = Search.execute('first in:title')
-      expect(results.posts.length).to eq(0)
-
-      results = Search.execute('first t')
-      expect(results.posts.length).to eq(0)
+      expect(results.posts).to eq([])
     end
 
     it 'works irrespective of the order' do
@@ -1492,7 +1548,7 @@ describe Search do
       results = Search.execute('ragis', type_filter: 'topic')
       expect(results.posts.length).to eq(1)
 
-      results = Search.execute('Rágis', type_filter: 'topic', include_blurbs: true)
+      results = Search.execute('Rágis', type_filter: 'topic')
       expect(results.posts.length).to eq(1)
 
       # TODO: this is a test we need to fix!
@@ -1514,7 +1570,7 @@ describe Search do
       results = Search.execute('regis', type_filter: 'topic')
       expect(results.posts.length).to eq(0)
 
-      results = Search.execute('Régis', type_filter: 'topic', include_blurbs: true)
+      results = Search.execute('Régis', type_filter: 'topic')
       expect(results.posts.length).to eq(1)
 
       expect(results.blurb(results.posts.first)).to include('Régis')

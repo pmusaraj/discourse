@@ -17,7 +17,7 @@ module TopicGuardian
     return false if anonymous? || topic.nil?
     return true if is_staff?
 
-    SiteSetting.enable_category_group_review? &&
+    SiteSetting.enable_category_group_moderation? &&
       topic.category.present? &&
       topic.category.reviewable_by_group_id.present? &&
       GroupUser.where(group_id: topic.category.reviewable_by_group_id, user_id: user.id).exists?
@@ -29,6 +29,10 @@ module TopicGuardian
 
   def can_create_whisper?
     is_staff? && SiteSetting.enable_whispers?
+  end
+
+  def can_see_whispers?(_topic)
+    is_staff?
   end
 
   def can_publish_topic?(topic, category)
@@ -199,4 +203,18 @@ module TopicGuardian
 
     false
   end
+
+  def can_perform_action_available_to_group_moderators?(topic)
+    return false if anonymous? || topic.nil?
+    return true if is_staff?
+    return true if @user.has_trust_level?(TrustLevel[4])
+
+    SiteSetting.enable_category_group_moderation? &&
+      topic.category.present? &&
+      topic.category.reviewable_by_group_id.present? &&
+      GroupUser.where(group_id: topic.category.reviewable_by_group_id, user_id: @user.id).exists?
+  end
+  alias :can_archive_topic? :can_perform_action_available_to_group_moderators?
+  alias :can_close_topic? :can_perform_action_available_to_group_moderators?
+
 end

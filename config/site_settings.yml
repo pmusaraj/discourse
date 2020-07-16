@@ -618,7 +618,7 @@ groups:
     default: true
   group_in_subject:
     default: false
-  enable_category_group_review:
+  enable_category_group_moderation:
     client: true
     default: false
 
@@ -1766,10 +1766,7 @@ backups:
 
 search:
   search_ranking_normalization:
-    default: "1"
-    hidden: true
-  search_inject_extra_terms:
-    default: true
+    default: "0"
     hidden: true
   min_search_term_length:
     client: true

@@ -170,7 +170,7 @@ export function applyDefaultHandlers(pretender) {
         ]
       },
       badges: [{ id: 444, count: 1 }],
-      topics: [{ id: 1234, title: "cool title", url: "/t/1234/cool-title" }]
+      topics: [{ id: 1234, title: "cool title", slug: "cool-title" }]
     });
   });
 
@@ -254,6 +254,14 @@ export function applyDefaultHandlers(pretender) {
   pretender.get("/t/9.json", () => response(fixturesByUrl["/t/9/1.json"]));
   pretender.get("/t/12.json", () => response(fixturesByUrl["/t/12/1.json"]));
   pretender.put("/t/1234/re-pin", success);
+
+  pretender.get("/t/2480.json", () => {
+    const json = fixturesByUrl["/t/34/1.json"];
+    json.details.can_archive_topic = true;
+    json.details.can_close_topic = true;
+
+    return response(json);
+  });
 
   pretender.get("/t/id_for/:slug", () => {
     return response({
