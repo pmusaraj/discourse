@@ -240,10 +240,8 @@ export default Component.extend({
   },
 
   @discourseComputed("topic", "quoteState")
-  shareUrl() {
-    return getAbsoluteURL(
-      postUrl(this.topic.slug, this.topic.id, this.quoteState.postId)
-    );
+  shareUrl(topic, quoteState) {
+    return getAbsoluteURL(postUrl(topic.slug, topic.id, quoteState.postId));
   },
 
   @discourseComputed("topic.details.can_create_post", "composer.visible")
