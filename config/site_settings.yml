@@ -200,7 +200,7 @@ basic:
   share_quote_visibility:
     client: true
     type: enum
-    default: "anonymous"
+    default: "none"
     choices:
       - none
       - anonymous
@@ -208,7 +208,7 @@ basic:
   share_quote_buttons:
     client: true
     type: list
-    default: ""
+    default: "twitter|email"
     allow_any: false
     choices:
       - twitter

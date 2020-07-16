@@ -1,3 +1,5 @@
+$quote-share-maxwidth: 150px;
+
 .button-count.has-pending {
   span {
     background-color: $danger;
@@ -296,18 +298,6 @@ blockquote {
   }
 }
 
-@keyframes bump {
-  0%,
-  20%,
-  60%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10%);
-  }
-}
-
 .quote-button {
   display: none;
   position: absolute;
@@ -344,20 +334,21 @@ blockquote {
       align-items: center;
     }
 
-    .insert-quote-share {
+    .quote-share-label {
       opacity: 1;
-      max-width: 120px;
+      max-width: $quote-share-maxwidth;
       transition: opacity 0.3s ease-in-out, max-width 0.3s ease-in-out,
         padding 0.3s ease-in-out;
     }
 
-    &:hover .insert-quote-share {
+    &:hover .quote-share-label {
+      background: transparent;
       opacity: 0;
       max-width: 0px;
       padding: 6px 0px;
     }
 
-    .quote-share-buttons {
+    .quote-share-label + .quote-share-buttons {
       opacity: 0;
       overflow: hidden;
       max-width: 0;
@@ -365,12 +356,9 @@ blockquote {
       transition: opacity 0.3s ease-in-out, max-width 0.3s ease-in-out;
     }
 
-    &:hover .quote-share-buttons {
-      max-width: 120px;
+    &:hover .quote-share-label + .quote-share-buttons {
+      max-width: $quote-share-maxwidth;
       opacity: 1;
-      .btn {
-        animation: bump 0.6s;
-      }
     }
   }
 }

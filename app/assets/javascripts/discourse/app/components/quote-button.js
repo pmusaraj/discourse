@@ -234,6 +234,11 @@ export default Component.extend({
     );
   },
 
+  @discourseComputed
+  quoteSharingShowLabel() {
+    return this.quoteSharingSources.length > 1;
+  },
+
   @discourseComputed("topic", "quoteState")
   shareUrl() {
     return getAbsoluteURL(

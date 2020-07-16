@@ -8,10 +8,12 @@
 
 {{#if quoteSharingEnabled}}
   <span class="quote-sharing">
-    {{d-button
-      icon="share"
-      label="post.quote_share"
-      class="btn-flat insert-quote-share"}}
+    {{#if quoteSharingShowLabel}}
+      {{d-button
+        icon="share"
+        label="post.quote_share"
+        class="btn-flat quote-share-label"}}
+    {{/if}}
 
     <span class="quote-share-buttons">
       {{#each quoteSharingSources as |source|}}
